@@ -7,8 +7,10 @@ environment:
   sdk: ^3.5.3
 
 dependencies:
+  android_intent_plus: ^5.1.0
   flutter:
     sdk: flutter
+  webview_flutter: ^4.9.0
 
 dev_dependencies:
   flutter_test:
