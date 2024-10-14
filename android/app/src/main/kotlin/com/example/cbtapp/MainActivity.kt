@@ -61,6 +61,8 @@ class MainActivity: FlutterActivity() {
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val appTasks = activityManager.appTasks
         if (appTasks.isNotEmpty()) {
+        MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, CHANNEL).invokeMethod("showWarning", null)
+
             appTasks[0].moveToFront()
         }
     }
