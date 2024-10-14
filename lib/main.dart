@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/webViewScreen.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
   runApp(const MainApp());
@@ -17,6 +18,9 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   bool _isExiting = false; // check if the user is trying to exit the app
+  bool _showWarning = false;
+  final cookieManager = WebViewCookieManager(); // cookie manager
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +28,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // start screen pinning
     enableScreenPinning();
+    MethodChannel('com.example.cbtapp/screenPinning')
+        .setMethodCallHandler((call) async {
+      if (call.method == 'showWarning') {
+        setState(() {
+          _showWarning = true;
+          print('show warningnya $_showWarning');
+        });
+      }
+    });
   }
 
   @override
@@ -88,13 +101,81 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     SystemNavigator.pop(); // exit the app
   }
 
+  Future<void> _onClearCookies() async {
+    await cookieManager.clearCookies();
+    // String message = 'There were cookies. Now, they are gone!';
+    // if (!hadCookies) {
+    //   message = 'There were no cookies to clear.';
+    // }
+    // if (!mounted) return null;
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text(message),
+    //   ),
+    // );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // hide the debug banner
-      home: WebViewScreen(
-        onExitApp: _exitApp, // exit the app
-      ),
+      home: Stack(children: [
+        WebViewScreen(
+          onExitApp: _exitApp, // exit the app
+        ),
+        // show a warning dialog if the user tries to exit the app
+        if (_showWarning) // Tampilkan peringatan jika diperlukan
+          Container(
+            color: Colors.black54,
+            child: Center(
+              child: Container(
+                  padding: const EdgeInsets.all(20),
+                  color: Colors.red,
+                  child: Dialog(
+                    backgroundColor: Colors.red,
+                    child: Column(
+                      // mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Peringatan!!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Anda terdeteksi mencoba keluar dari aplikasi, silahkan klik tombol "tutup" untuk keluar dari aplikasi lalu buka kembali aplikasi.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                            "laporkan kepada pengawas untuk reset akun anda",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            )),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _showWarning = false;
+                              _onClearCookies();
+                              _exitApp();
+                            });
+                          },
+                          child: const Text('Tutup'),
+                        ),
+                      ],
+                    ),
+                  )),
+            ),
+          ),
+      ]),
     );
   }
 }

@@ -5,6 +5,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -35,6 +36,8 @@ class MainActivity: FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+
     }
 
     private fun enableScreenPinning() {
@@ -65,5 +68,10 @@ class MainActivity: FlutterActivity() {
     private fun exitApp() {
         disableScreenPinning()
         finishAffinity()
+    }
+
+    override fun onUserLeaveHint(){
+        super.onUserLeaveHint()
+        MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, CHANNEL).invokeMethod("showWarning", null)
     }
 }
