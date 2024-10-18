@@ -41,7 +41,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
       )
       ..setJavaScriptMode(JavaScriptMode.unrestricted) // enable javascript
       ..loadRequest(
-        Uri.parse('https://cbt.elearning.smkairlanggabpn.sch.id/'), // load the webview with the given url
+        Uri.parse(
+            'https://cbt.elearning.smkairlanggabpn.sch.id/entry.php'), // load the webview with the given url
       );
   }
 
@@ -72,7 +73,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope( // PopScope is a custom widget that prevents the app from exiting button back press
+    return PopScope(
+      // PopScope is a custom widget that prevents the app from exiting button back press
       canPop: false,
       onPopInvoked: (bool didpop) async {
         if (kDebugMode) {
