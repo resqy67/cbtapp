@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/webViewScreen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+// import 'package:package_info_plus/package_info_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 void main() {
   runApp(const MainApp());
@@ -18,8 +22,10 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   bool _isExiting = false; // check if the user is trying to exit the app
-  bool _showWarning = false;
+  bool _showWarning = false; // show warning dialog
+  bool _isInitialized = false; // check if the app is initialized
   final cookieManager = WebViewCookieManager(); // cookie manager
+  String _appVersion = 'Unknown'; // app version
 
   @override
   void initState() {
@@ -28,13 +34,41 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // start screen pinning
     enableScreenPinning();
+    // _getAppVersion();
+    // if (await _isVivoDevice()){
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Timer(const Duration(seconds: 5), () {
+    //     setState(() {
+    //       _isInitialized = true; // Tandai bahwa aplikasi sudah berjalan
+    //     });
+    //   });
+    // });
+    // }
+    enableScreenPinning();
+
+    // Tunggu 10 detik sebelum menandai bahwa aplikasi sudah berjalan
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Timer(const Duration(seconds: 5), () {
+        setState(() {
+          _isInitialized = true; // Tandai bahwa aplikasi sudah berjalan
+          print('isInitialized aktif: $_isInitialized');
+        });
+      });
+    });
+    // listen for method channel messages
     MethodChannel('com.example.cbtapp/screenPinning')
         .setMethodCallHandler((call) async {
       if (call.method == 'showWarning') {
-        setState(() {
-          _showWarning = true;
-          print('show warningnya $_showWarning');
-        });
+        if (_isInitialized) {
+          // Tampilkan warning jika aplikasi sudah berjalan
+          setState(() {
+            _showWarning = true;
+            print('showWarning aktif: $_showWarning');
+          });
+        } else {
+          print(
+              'showWarning ditunda karena aplikasi belum berjalan cukup lama');
+        }
       }
     });
   }
@@ -46,6 +80,28 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  // check if the device is a Vivo device
+  // Future<bool> _isVivoDevice() async {
+  //   final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  //   final androidInfo = await deviceInfo.androidInfo;
+  //   return androidInfo.brand.toLowerCase() == 'vivo';
+  // }
+
+  Future<void> _getAppVersion() async {
+    const platform = MethodChannel('com.example.cbtapp/screenPinning');
+    String version;
+    try {
+      version = await platform.invokeMethod('getAppVersion');
+    } on PlatformException catch (e) {
+      version = "Failed to get version: '${e.message}'.";
+    }
+    print('versionnya $version');
+
+    setState(() {
+      _appVersion = version;
+    });
+  }
+
   // handle app lifecycle state changes if the app is in the background or inactive
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -55,6 +111,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             state == AppLifecycleState.inactive) &&
         !_isExiting) {
       _bringAppToForeground();
+      // getVersion();
     }
   }
 
@@ -103,16 +160,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   Future<void> _onClearCookies() async {
     await cookieManager.clearCookies();
-    // String message = 'There were cookies. Now, they are gone!';
-    // if (!hadCookies) {
-    //   message = 'There were no cookies to clear.';
-    // }
-    // if (!mounted) return null;
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     content: Text(message),
-    //   ),
-    // );
   }
 
   @override
@@ -129,12 +176,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             color: Colors.black54,
             child: Center(
               child: Container(
-                  padding: const EdgeInsets.all(20),
                   color: Colors.red,
                   child: Dialog(
                     backgroundColor: Colors.red,
                     child: Column(
-                      // mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
@@ -142,6 +188,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 30,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -151,10 +198,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                             color: Colors.white,
                             fontSize: 20,
                           ),
+                          textAlign: TextAlign.justify,
                         ),
                         const SizedBox(height: 20),
                         const Text(
                             "laporkan kepada pengawas untuk reset akun anda",
+                            textAlign: TextAlign.justify,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -168,7 +217,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                               _exitApp();
                             });
                           },
-                          child: const Text('Tutup'),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
+                          child: const Text('Tutup Aplikasi',
+                              style: TextStyle(fontSize: 18)),
                         ),
                       ],
                     ),

@@ -97,14 +97,14 @@ class _WebViewScreenState extends State<WebViewScreen> {
           title: const Text('CBT SKARLA'),
           actions: [
             IconButton(
-              padding: const EdgeInsets.only(right: 16),
+              // padding: const EdgeInsets.only(right: 16),
               onPressed: () {
                 controller.reload(); // reload the webview
               },
               icon: const Icon(Icons.refresh),
             ),
             IconButton(
-              padding: const EdgeInsets.only(right: 25),
+              // padding: const EdgeInsets.only(right: 25),
               onPressed: () {
                 // _onClearCookies(); // clear cookies if needed
                 widget.onExitApp();
