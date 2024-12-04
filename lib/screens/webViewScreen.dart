@@ -37,12 +37,19 @@ class _WebViewScreenState extends State<WebViewScreen> {
               loadingPercentage = progress;
             });
           },
+          // onHttpError: (error) {
+          //   ScaffoldMessenger.of(context).showSnackBar(
+          //     SnackBar(
+          //       content: Text('HTTP error: $error'),
+          //     ),
+          //   );
+          // },
         ),
       )
       ..setJavaScriptMode(JavaScriptMode.unrestricted) // enable javascript
       ..loadRequest(
         Uri.parse(
-            'https://cbt.elearning.smkairlanggabpn.sch.id/entry.php'), // load the webview with the given url
+            'https://guru.elearning.smkairlanggabpn.sch.id/exam.php'), // load the webview with the given url
       );
   }
 
@@ -107,7 +114,11 @@ class _WebViewScreenState extends State<WebViewScreen> {
               // padding: const EdgeInsets.only(right: 25),
               onPressed: () {
                 // _onClearCookies(); // clear cookies if needed
-                widget.onExitApp();
+                // widget.onExitApp();
+                showDialog(
+                  context: context,
+                  builder: (context) => _dialogExitApp(context),
+                );
               },
               icon: const Icon(Icons.exit_to_app),
             ),
@@ -125,6 +136,29 @@ class _WebViewScreenState extends State<WebViewScreen> {
             ),
         ]),
       ),
+    );
+  }
+
+  Widget _dialogExitApp(BuildContext Context) {
+    return AlertDialog(
+      title: const Text('Keluar Aplikasi'),
+      content: const Text(
+          'Apakah anda yakin ingin keluar aplikasi?. Jangan lupa untuk submit ujian terlebih dahulu.'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Tidak'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            widget.onExitApp();
+          },
+          child: const Text('Ya'),
+        ),
+      ],
     );
   }
 }

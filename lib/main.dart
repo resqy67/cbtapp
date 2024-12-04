@@ -6,6 +6,7 @@ import 'screens/webViewScreen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 // import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
   runApp(const MainApp());
@@ -24,6 +25,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   bool _isExiting = false; // check if the user is trying to exit the app
   bool _showWarning = false; // show warning dialog
   bool _isInitialized = false; // check if the app is initialized
+  bool _isConnected = true; // check if the device is connected to the internet
   final cookieManager = WebViewCookieManager(); // cookie manager
   String _appVersion = 'Unknown'; // app version
 
@@ -44,8 +46,16 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     //   });
     // });
     // }
-    enableScreenPinning();
-
+    // enableScreenPinning();
+    _checkConnectivity();
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> results) {
+      setState(() {
+        _isConnected =
+            results.isNotEmpty && results.first != ConnectivityResult.none;
+      });
+    });
     // Tunggu 10 detik sebelum menandai bahwa aplikasi sudah berjalan
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Timer(const Duration(seconds: 5), () {
@@ -86,6 +96,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   //   final androidInfo = await deviceInfo.androidInfo;
   //   return androidInfo.brand.toLowerCase() == 'vivo';
   // }
+
+  Future<void> _checkConnectivity() async {
+    final List<ConnectivityResult> connectivityResult =
+        await (Connectivity().checkConnectivity());
+    setState(() {
+      _isConnected = connectivityResult != ConnectivityResult.none;
+    });
+  }
 
   Future<void> _getAppVersion() async {
     const platform = MethodChannel('com.example.cbtapp/screenPinning');
@@ -162,73 +180,109 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     await cookieManager.clearCookies();
   }
 
-  @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // hide the debug banner
-      home: Stack(children: [
-        WebViewScreen(
-          onExitApp: _exitApp, // exit the app
-        ),
-        // show a warning dialog if the user tries to exit the app
-        if (_showWarning) // Tampilkan peringatan jika diperlukan
-          Container(
-            color: Colors.black54,
-            child: Center(
-              child: Container(
-                  color: Colors.red,
-                  child: Dialog(
-                    backgroundColor: Colors.red,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Peringatan!!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
+      debugShowCheckedModeBanner: false, // Hilangkan banner debug
+      home: Scaffold(
+        body: Stack(
+          children: [
+            // Tampilkan WebView jika terhubung, atau pesan jika tidak
+            _isConnected
+                ? WebViewScreen(
+                    onExitApp: _exitApp, // exit the app
+                  )
+                : _buildNoInternetMessage(),
+
+            // Tampilkan dialog peringatan jika diperlukan
+            if (_showWarning)
+              Container(
+                color: Colors.black54,
+                child: Center(
+                  child: Container(
+                    color: Colors.red,
+                    child: Dialog(
+                      backgroundColor: Colors.red,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Peringatan!!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Anda terdeteksi mencoba keluar dari aplikasi, silahkan klik tombol "tutup" untuk keluar dari aplikasi lalu buka kembali aplikasi.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Anda terdeteksi mencoba keluar dari aplikasi, silahkan klik tombol "tutup" untuk keluar dari aplikasi lalu buka kembali aplikasi.',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                            textAlign: TextAlign.justify,
                           ),
-                          textAlign: TextAlign.justify,
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                            "laporkan kepada pengawas untuk reset akun anda",
+                          const SizedBox(height: 20),
+                          const Text(
+                            "Laporkan kepada pengawas untuk reset akun Anda.",
                             textAlign: TextAlign.justify,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 20,
-                            )),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _showWarning = false;
-                              _onClearCookies();
-                              _exitApp();
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
+                            ),
                           ),
-                          child: const Text('Tutup Aplikasi',
-                              style: TextStyle(fontSize: 18)),
-                        ),
-                      ],
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _showWarning = false;
+                                _onClearCookies();
+                                _exitApp();
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 50),
+                            ),
+                            child: const Text(
+                              'Tutup Aplikasi',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  )),
-            ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoInternetMessage() {
+    return Center(
+      child: AlertDialog(
+        title: const Text('Tidak Ada Koneksi Internet'),
+        content: const Text(
+            'Aplikasi memerlukan koneksi internet untuk berjalan. Silahkan cek koneksi internet Anda dan coba lagi.'),
+        actions: [
+          Builder(
+            builder: (BuildContext context) {
+              return ElevatedButton(
+                onPressed: () {
+                  _exitApp();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('OK', style: TextStyle(color: Colors.white)),
+              );
+            },
           ),
-      ]),
+        ],
+      ),
     );
   }
 }
