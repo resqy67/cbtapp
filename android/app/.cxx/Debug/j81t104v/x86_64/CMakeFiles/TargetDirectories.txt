@@ -1,0 +1,2 @@
+C:/punyaku/test/cbtapp/android/app/.cxx/Debug/j81t104v/x86_64/CMakeFiles/edit_cache.dir
+C:/punyaku/test/cbtapp/android/app/.cxx/Debug/j81t104v/x86_64/CMakeFiles/rebuild_cache.dir

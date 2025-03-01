@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'screens/webViewScreen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 // import 'package:package_info_plus/package_info_plus.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+// import 'package:device_info_plus/device_info_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() {
@@ -27,7 +27,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   bool _isInitialized = false; // check if the app is initialized
   bool _isConnected = true; // check if the device is connected to the internet
   final cookieManager = WebViewCookieManager(); // cookie manager
-  String _appVersion = 'Unknown'; // app version
+  // String _appVersion = 'Unknown'; // app version
 
   @override
   void initState() {
@@ -105,20 +105,20 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _getAppVersion() async {
-    const platform = MethodChannel('com.example.cbtapp/screenPinning');
-    String version;
-    try {
-      version = await platform.invokeMethod('getAppVersion');
-    } on PlatformException catch (e) {
-      version = "Failed to get version: '${e.message}'.";
-    }
-    print('versionnya $version');
+  // Future<void> _getAppVersion() async {
+  //   const platform = MethodChannel('com.example.cbtapp/screenPinning');
+  //   String version;
+  //   try {
+  //     version = await platform.invokeMethod('getAppVersion');
+  //   } on PlatformException catch (e) {
+  //     version = "Failed to get version: '${e.message}'.";
+  //   }
+  //   print('versionnya $version');
 
-    setState(() {
-      _appVersion = version;
-    });
-  }
+  //   setState(() {
+  //     _appVersion = version;
+  //   });
+  // }
 
   // handle app lifecycle state changes if the app is in the background or inactive
   @override

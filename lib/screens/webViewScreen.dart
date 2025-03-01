@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'dart:async';
 
 class WebViewScreen extends StatefulWidget {
   const WebViewScreen({Key? key, required this.onExitApp}) : super(key: key);
@@ -15,28 +16,47 @@ class _WebViewScreenState extends State<WebViewScreen> {
   late WebViewController controller; // webview controller
   var loadingPercentage = 0; // loading percentage
   final cookieManager = WebViewCookieManager(); // cookie manager
+  bool _isLoading = true;
+  bool _isExiting = false; // check if the user is trying to exit the app
+  bool _hasError = false;
+  Timer? _timeoutTimer;
 
   @override
   void initState() {
     super.initState();
+    _startTimeoutTimer();
     controller = WebViewController()
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
             setState(() {
               loadingPercentage = 0;
+              _isLoading = true;
+              _hasError = false;
             });
+
+            _timeoutTimer?.cancel();
+            _startTimeoutTimer();
           },
           onPageFinished: (String url) {
             setState(() {
               loadingPercentage = 100;
+              _isLoading = false;
             });
+            _timeoutTimer?.cancel();
           },
           onProgress: (int progress) {
             setState(() {
               loadingPercentage = progress;
             });
           },
+          onWebResourceError: (WebResourceError error) {
+            _handleError();
+          },
+          onHttpError: (HttpResponseError error) {
+            _handleError();
+          },
+
           // onHttpError: (error) {
           //   ScaffoldMessenger.of(context).showSnackBar(
           //     SnackBar(
@@ -51,6 +71,21 @@ class _WebViewScreenState extends State<WebViewScreen> {
         Uri.parse(
             'https://guru.elearning.smkairlanggabpn.sch.id/exam.php'), // load the webview with the given url
       );
+  }
+
+  @override
+  void dispose() {
+    _timeoutTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimeoutTimer() {
+    _timeoutTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
+      // Periksa apakah halaman masih dalam proses loading
+      if (_isLoading) {
+        _handleError();
+      }
+    });
   }
 
   // invoke the method channel to disable screen pinning
@@ -76,6 +111,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
         content: Text(message),
       ),
     );
+  }
+
+  Future<void> _exitApp() async {
+    setState(() {
+      _isExiting =
+          true; // mark bool as true after the user tries to exit the app
+    });
+    await _disableScreenPinning(); // disable screen pinning
+    SystemNavigator.pop(); // exit the app
   }
 
   @override
@@ -125,6 +169,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
           ],
         ),
         body: Stack(children: [
+          if (_isLoading) Center(child: CircularProgressIndicator()),
+          if (_hasError) _buildNoInternetMessage(),
           WebViewWidget(
             controller: controller,
           ),
@@ -160,5 +206,50 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildNoInternetMessage() {
+    return Center(
+      child: AlertDialog(
+        title: const Text('Tidak Ada Koneksi Internet'),
+        content: const Text(
+            'Aplikasi memerlukan koneksi internet untuk berjalan. Silahkan cek koneksi internet Anda dan coba lagi.'),
+        actions: [
+          Builder(
+            builder: (BuildContext context) {
+              return ElevatedButton(
+                onPressed: () {
+                  _exitApp();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('OK', style: TextStyle(color: Colors.white)),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleError() {
+    setState(() {
+      // _isLoading = false;
+      _hasError = true;
+    });
+    controller.loadHtmlString('''
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Error</title>
+        </head>
+        <body style="background-color: #ffffff; text-align: center; padding: 50px;">
+          <h1 style="color: red;">Tidak Ada Koneksi Internet</h1>
+          <p>Pastikan Anda terhubung ke internet dan keluar dari aplikasi.</p>
+        </body>
+      </html>
+    ''');
   }
 }

@@ -33,10 +33,10 @@ class MainActivity: FlutterActivity() {
                     exitApp()
                     result.success(null)
                 }
-                "getAppVersion" -> { // Handler untuk mendapatkan versi aplikasi
-                    val version = getAppVersion()
-                    result.success(version)
-                }
+                // "getAppVersion" -> { // Handler untuk mendapatkan versi aplikasi
+                //     val version = getAppVersion()
+                //     result.success(version)
+                // }
                 else -> result.notImplemented()
             }
         }
@@ -76,14 +76,14 @@ class MainActivity: FlutterActivity() {
         finishAffinity()
     }
 
-    private fun getAppVersion(): String {
-        return try {
-            val pInfo = this.packageManager.getPackageInfo(this.packageName, 0)
-            pInfo.versionName
-        } catch (e: Exception) {
-            "Version not available"
-        }
-    }
+    // private fun getAppVersion(): String {
+    //     return try {
+    //         val pInfo = this.packageManager.getPackageInfo(this.packageName, 0)
+    //         pInfo.versionName
+    //     } catch (e: Exception) {
+    //         "Version not available"
+    //     }
+    // }
 
     override fun onUserLeaveHint(){
         super.onUserLeaveHint()
