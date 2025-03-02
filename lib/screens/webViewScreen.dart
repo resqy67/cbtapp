@@ -238,6 +238,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
       // _isLoading = false;
       _hasError = true;
     });
+    _buildNoInternetMessage();
     controller.loadHtmlString('''
       <!DOCTYPE html>
       <html>
