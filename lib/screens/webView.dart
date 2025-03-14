@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class WebViewScreen extends StatefulWidget {
   const WebViewScreen({Key? key, required this.onExitApp}) : super(key: key);
@@ -19,11 +20,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
   bool _hasError = false;
   var loadingPercentage = 0; // loading percentage
   String _errorMessage = '';
+  String _appVersion = '';
   Timer? _connectionTimer;
 
   @override
   void initState() {
     super.initState();
+    _getAppVersion();
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(NavigationDelegate(
@@ -118,6 +121,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
     );
   }
 
+  Future<void> _getAppVersion() async => _appVersion =
+      (await PackageInfo.fromPlatform()).version; // get app version
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,7 +148,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
           valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
         ),
       ),
-      title: const Text('CBT SKARLA'),
+      title: Text('CBT SKARLA $_appVersion'),
       centerTitle: true,
       actions: [
         IconButton(
@@ -163,13 +169,11 @@ class _WebViewScreenState extends State<WebViewScreen> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context), child: Text('Tidak')),
-          TextButton(
-              onPressed: () {
-                _onClearCookies();
-                Navigator.pop(context);
-                widget.onExitApp();
-              },
-              child: Text('Ya')),
+          ElevatedButton(
+            onPressed: _exitApp,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Ya', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -177,7 +181,12 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   Widget _buildNoInternetMessage() {
     return AlertDialog(
-      title: Text('Terdapat Masalah Koneksi Internet di smartphone Anda'),
+      icon: Icon(
+        Icons.error,
+        color: Colors.red,
+        size: 50,
+      ),
+      title: Text('Terdapat Masalah Koneksi Internet di smartphone Anda!'),
       content: Text(
           'Silakan cek koneksi internet Anda dan Klik OK untuk keluar atau refresh halaman. Jika masih terlihat kode error, silakan hubungi Panitia Ujian. $_errorMessage'),
       actions: [
