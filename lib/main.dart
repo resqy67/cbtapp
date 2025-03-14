@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/webViewScreen.dart';
+// import 'screens/webViewScreen.dart';
+import 'screens/webView.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 // import 'package:package_info_plus/package_info_plus.dart';
 // import 'package:device_info_plus/device_info_plus.dart';

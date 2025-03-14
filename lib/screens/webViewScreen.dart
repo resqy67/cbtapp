@@ -51,19 +51,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            _handleError();
+            // print('WebResourceError: ${error}');
+            _handleError(error.description);
           },
-          onHttpError: (HttpResponseError error) {
-            _handleError();
-          },
-
-          // onHttpError: (error) {
-          //   ScaffoldMessenger.of(context).showSnackBar(
-          //     SnackBar(
-          //       content: Text('HTTP error: $error'),
-          //     ),
-          //   );
-          // },
         ),
       )
       ..setJavaScriptMode(JavaScriptMode.unrestricted) // enable javascript
@@ -80,10 +70,14 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   void _startTimeoutTimer() {
-    _timeoutTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
+    _timeoutTimer = Timer.periodic(Duration(seconds: 60), (timer) async {
       // Periksa apakah halaman masih dalam proses loading
       if (_isLoading) {
-        _handleError();
+        setState(() {
+          // _isLoading = false;
+          _hasError = true;
+        });
+        _handleError('Timeout: The page took too long to load.');
       }
     });
   }
@@ -177,8 +171,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
           if (loadingPercentage < 100)
             Center(
               child: CircularProgressIndicator(
-                value: loadingPercentage / 100,
-              ),
+                  // value: loadingPercentage / 100,
+                  ),
             ),
         ]),
       ),
@@ -199,6 +193,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ),
         TextButton(
           onPressed: () {
+            _onClearCookies();
             Navigator.of(context).pop();
             widget.onExitApp();
           },
@@ -212,7 +207,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
     return Center(
       child: AlertDialog(
         title: const Text('Tidak Ada Koneksi Internet'),
-        content: const Text(
+        content: Text(
             'Aplikasi memerlukan koneksi internet untuk berjalan. Silahkan cek koneksi internet Anda dan coba lagi.'),
         actions: [
           Builder(
@@ -233,24 +228,85 @@ class _WebViewScreenState extends State<WebViewScreen> {
     );
   }
 
-  void _handleError() {
+  void _handleError(String error) {
     setState(() {
       // _isLoading = false;
       _hasError = true;
     });
-    _buildNoInternetMessage();
     controller.loadHtmlString('''
       <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Error</title>
-        </head>
-        <body style="background-color: #ffffff; text-align: center; padding: 50px;">
-          <h1 style="color: red;">Tidak Ada Koneksi Internet</h1>
-          <p>Pastikan Anda terhubung ke internet dan keluar dari aplikasi.</p>
-        </body>
+      <html lang="id">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Error - Koneksi Internet</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background-color: #f8f9fa;
+                  text-align: center;
+                  padding: 50px;
+                  color: #333;
+              }
+              .container {
+                  background: #fff;
+                  padding: 30px;
+                  border-radius: 10px;
+                  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                  max-width: 500px;
+                  margin: auto;
+              }
+              h1 {
+                  color: #d9534f;
+                  font-size: 24px;
+              }
+              p {
+                  font-size: 16px;
+                  line-height: 1.5;
+              }
+              .error-message {
+                  font-weight: bold;
+                  font-size: 18px;
+                  color: #d9534f;
+                  background: #ffe6e6;
+                  padding: 10px;
+                  border-radius: 5px;
+                  display: inline-block;
+                  margin: 10px 0;
+                  border: 1px solid #d9534f;
+              }
+              .error-icon {
+                  font-size: 50px;
+                  color: #d9534f;
+                  margin-bottom: 10px;
+              }
+              .button {
+                  display: inline-block;
+                  padding: 10px 20px;
+                  margin-top: 15px;
+                  font-size: 16px;
+                  color: #fff;
+                  background-color: #0275d8;
+                  border-radius: 5px;
+                  text-decoration: none;
+                  transition: 0.3s;
+              }
+              .button:hover {
+                  background-color: #025aa5;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="error-icon">⚠️</div>
+              <h1>Koneksi Internet Smartphone terganggu</h1>
+              <p class="error-message">$error</p>
+              <p>Ujian tidak dapat dilanjutkan.</p>
+              <p>Tunjukkan kepada Panitia Ujian untuk mengetahui apa yang terjadi di smartphone kamu!</p>
+          </div>
+      </body>
       </html>
-    ''');
+      ''');
+    _buildNoInternetMessage();
   }
 }
