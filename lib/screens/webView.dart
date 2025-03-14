@@ -140,14 +140,16 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(2),
-        child: LinearProgressIndicator(
-          value: loadingPercentage / 100,
-          backgroundColor: Colors.white,
-          valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-        ),
-      ),
+      bottom: loadingPercentage < 100
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(2),
+              child: LinearProgressIndicator(
+                value: loadingPercentage / 100,
+                backgroundColor: Colors.white,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+            )
+          : null,
       title: Text('CBT SKARLA $_appVersion'),
       centerTitle: true,
       actions: [
