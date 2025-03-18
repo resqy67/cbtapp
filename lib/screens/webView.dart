@@ -48,6 +48,12 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   void _handlePageStarted() {
+    controller.runJavaScript("""
+            // Nonaktifkan autofill pada formulir
+            document.querySelectorAll('input').forEach(input => {
+              input.setAttribute('autocomplete', 'off');
+            });
+          """);
     setState(() {
       loadingPercentage = 0;
 
@@ -81,7 +87,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   void _startConnectionCheck() {
-    _connectionTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
+    _connectionTimer = Timer.periodic(Duration(seconds: 90), (timer) async {
       if (_isLoading) {
         setState(() {
           _hasError = true;
